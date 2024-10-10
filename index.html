@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat com IA - Desigualdade Social (ODS 10)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #DD1367; /* Cor da ODS 10 */
+            color: white;
+        }
+        h1 {
+            text-align: center;
+            color: white;
+        }
+        #chat-container {
+            border: 1px solid #fff;
+            background-color: rgba(255, 255, 255, 0.1);
+            height: 400px;
+            overflow-y: scroll;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        #user-input {
+            width: 70%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+        }
+        #send-button {
+            padding: 10px 20px;
+            background-color: white;
+            color: #DD1367;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #send-button:hover {
+            background-color: #f0f0f0;
+        }
+        .message {
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Chat sobre Desigualdade Social (ODS 10)</h1>
+    <div id="chat-container"></div>
+    <input type="text" id="user-input" placeholder="Digite sua mensagem...">
+    <button id="send-button">Enviar</button>
+
+    <script>
+        const chatContainer = document.getElementById('chat-container');
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+
+        const apiKey = '5f74eb8579e44d3db55d9548a13d7eb1';
+        const apiUrl = 'https://alexa-m20y9agv-francecentral.openai.azure.com/openai/deployments/gpt-35-turbo/chat/completions?api-version=2023-03-15-preview';
+
+        const systemPrompt = "Desigualdade social é um problema global que afeta milhões de pessoas, prejudicando o desenvolvimento sustentável. Com base na ODS 10 (Objetivo de Desenvolvimento Sustentável 10), que visa reduzir as desigualdades dentro e entre os países, treine a IA para identificar e propor soluções para desigualdades econômicas, sociais e políticas. A IA deve focar em:";
+
+        let conversationHistory = [
+            { role: "system", content: systemPrompt }
+        ];
+
+        async function sendMessage() {
+            const userMessage = userInput.value.trim();
+            if (userMessage === '') return;
+
+            appendMessage('Usuário', userMessage);
+            userInput.value = '';
+
+            conversationHistory.push({ role: "user", content: userMessage });
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'api-key': apiKey
+                    },
+                    body: JSON.stringify({
+                        messages: conversationHistory,
+                        max_tokens: 800,
+                        temperature: 0.7,
+                        frequency_penalty: 0,
+                        presence_penalty: 0,
+                        top_p: 0.95,
+                        stop: null
+                    })
+                });
+
+                const data = await response.json();
+                const aiMessage = data.choices[0].message.content;
+
+                appendMessage('IA', aiMessage);
+
+                conversationHistory.push({ role: "assistant", content: aiMessage });
+
+            } catch (error) {
+                console.error('Erro ao enviar mensagem:', error);
+                appendMessage('Sistema', 'Ocorreu um erro ao processar sua mensagem. Por favor, tente novamente.');
+            }
+        }
+
+        function appendMessage(sender, message) {
+            const messageElement = document.createElement('div');
+            messageElement.className = 'message';
+            messageElement.innerHTML = `<strong>${sender}:</strong> ${message}`;
+            chatContainer.appendChild(messageElement);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        sendButton.addEventListener('click', sendMessage);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+    </script>
+</body>
+</html>
